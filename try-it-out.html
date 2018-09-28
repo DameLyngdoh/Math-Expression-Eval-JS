@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+        <script src="math-expression-eval.js"></script>
+        <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.7.4/angular.min.js"></script>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+        
+        <script>
+            var app = angular.module("EvalTestApp", []);
+
+            app.controller("controller", function($scope){
+                ExpEvaluator.udFunctions = {
+                    "f": function(n){
+                        
+                        return 5*n[0] + n[1];
+                    }
+                };
+                // Initialization
+                $scope.strExp = "1+2";
+                $scope.resultExp = "";
+                $scope.resultType = -1;
+                $scope.type = {
+                    1: "operand",
+                    2: "operator",
+                    3: "left parenthesis",
+                    4: "right parenthesis"
+                };
+                $scope.errorMsg = "";
+
+                // Tokenizing function
+                $scope.tokenize = function(){
+                    if($scope.strExp==""){
+                        return;
+                    }
+
+                    $scope.tokens = [];
+                    try{
+                        $scope.tokens = ExpEvaluator.tokenize($scope.strExp);
+                        $scope.resultExp = "";
+                        for(var i=0; i<$scope.tokens.length; i++){
+                            $scope.resultExp += $scope.tokens[i].value;
+                        }
+                        $scope.resultType = 1;
+                    }
+                    catch(error){
+                        console.log(error);
+                        if(error.message!=undefined){
+                            $scope.errorMsg = error.message;
+                        }
+                        $scope.resultExp = "";
+                        $scope.resultType = -2;
+                    }
+                };
+
+                // Postfix function
+                $scope.postfix = function(){
+                    if($scope.strExp==""){
+                        return;
+                    }
+
+                    $scope.tokens = [];
+                    try{
+                        $scope.tokens = ExpEvaluator.infixToPostfix(ExpEvaluator.tokenize($scope.strExp));
+                        $scope.resultExp = "";
+
+                        for(var i=0; i<$scope.tokens.length; i++){
+                            $scope.resultExp += $scope.tokens[i].value + " ";
+                        }
+                        $scope.resultType = 1;
+                    }
+                    catch(error){
+                        console.log(error);
+                        if(error.message!=undefined){
+                            $scope.errorMsg = error.message;
+                        }
+                        $scope.resultExp = "";
+                        $scope.resultType = -2;
+                    }
+                };
+
+                // Postfix function
+                $scope.evaluate = function(){
+                    if($scope.strExp==""){
+                        return;
+                    }
+
+                    $scope.tokens = [];
+                    try{
+                        $scope.tokens = ExpEvaluator.tokenize($scope.strExp);
+                        $scope.resultExp = ExpEvaluator.evaluateExpression($scope.strExp);
+                        $scope.resultType = 1;
+                    }
+                    catch(error){
+                        console.log(error);
+                        if(error.message!=undefined){
+                            $scope.errorMsg = error.message;
+                        }
+                        $scope.resultExp = "";
+                        $scope.resultType = -2;
+                    }
+                };
+
+                // Clearing function
+                $scope.clear = function(){
+                    $scope.strExp = "";
+                    $scope.resultType = -1;
+                    $scope.resultExp = "";
+                    $scope.tokens = [];
+                }
+            });
+        </script>
+
+        <style>
+            #input-col{
+                margin: 40px 20px;
+                margin-bottom: 10px;
+            }
+
+            .button-col{
+                text-align: center;
+            }
+
+            .btn{
+                width: 200px;
+            }
+
+            #button-row{
+                margin: 15px 0px;
+            }
+
+            td,th{
+                text-align: center;
+            }
+        </style>
+        <title>Expression Tester</title>
+    </head>
+    <body ng-app="EvalTestApp">
+        <div class="container-fluid" ng-controller="controller">
+            <!-- Input Row -->
+            <div class="row">
+                <div class="col" id="input-col">
+                    <div class="input-group input-group-lg">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text" id="inputGroup-sizing-lg">Expression</span>
+                        </div>
+                    <input ng-model="strExp" type="text" class="form-control" aria-label="String expression" aria-describedby="inputGroup-sizing-lg">
+                </div>
+                </div>
+            </div>
+            
+            <!-- Buttons Row -->
+            <div class="row" id="button-row">
+                <div class="col button-col">
+                    <button type="button" class="btn btn-outline-primary" ng-click="tokenize()">Tokenize</button>
+                </div>
+                <div class="col button-col">
+                    <button type="button" class="btn btn-outline-primary" ng-click="postfix()">Postfix</button>
+                </div>
+                <div class="col button-col">
+                    <button type="button" class="btn btn-outline-primary" ng-click="evaluate()">Evaluate</button>
+                </div>
+                <div class="col button-col">
+                    <button type="button" class="btn btn-outline-primary" ng-click="clear()">Clear</button>
+                </div>
+            </div>
+            
+            <!-- Textfield Output Row -->
+            <div class="row" style="margin: 7px 3px;">
+                <div class="col">
+                    <div class="input-group input-group-lg">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text" id="inputGroup-sizing-lg">Result</span>
+                        </div>
+                        <input id="resultInput" ng-model="resultExp" type="text" class="form-control" aria-label="String expression" aria-describedby="inputGroup-sizing-lg" readonly>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Table Output Row -->
+            <div class="row">
+                <div class="col" ng-if="resultType==1">
+                    <table class="table table-striped table-hover">
+                        <thead class="thead-dark">
+                            <tr>
+                                <th>
+                                    Token
+                                </th>
+                                <th>
+                                    Type
+                                </th>
+                                <th>
+                                    Precedence
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr ng-repeat="token in tokens">
+                                <td>
+                                    {{token.value}}
+                                </td>
+                                <td>
+                                    {{type[token.type]}}
+                                </td>
+                                <td>
+                                    <span ng-if="token.type==2">{{token.precedence}}</span>
+                                    <span ng-if="token.type!=2">NA</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="col" ng-if="resultType==-2" style="margin: 0 auto;">
+                    <div class="alert alert-danger" role="alert" style="text-align: center;">
+                        {{errorMsg}}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>
